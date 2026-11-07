@@ -1198,6 +1198,33 @@
       <path d="M 34 34 L 34 70" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
     </svg>`;
 
+    // 아래 세 그림은 새 이모지(🪥 🫙 🫧)라 오래된 기기에서 네모로 보여서 그림으로 바꿈
+    // 칫솔
+    const SVG_TOOTHBRUSH = `<svg viewBox="0 0 100 100" class="svg-icon toothbrush-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="44" y="30" width="12" height="64" rx="6" fill="#38bdf8" stroke="#0369a1" stroke-width="3.5" transform="rotate(20 50 62)"/>
+      <rect x="40" y="8" width="20" height="26" rx="4" fill="#ffffff" stroke="#0369a1" stroke-width="3.5" transform="rotate(20 50 62)"/>
+      <path d="M 44 12 L 44 30 M 50 12 L 50 30 M 56 12 L 56 30" stroke="#7dd3fc" stroke-width="3" stroke-linecap="round" transform="rotate(20 50 62)"/>
+    </svg>`;
+
+    // 잼 병
+    const SVG_JAM_JAR = `<svg viewBox="0 0 100 100" class="svg-icon jam-jar-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="26" y="10" width="48" height="14" rx="4" fill="#f87171" stroke="#b91c1c" stroke-width="3.5"/>
+      <path d="M 30 24 L 70 24 C 76 24 78 30 78 36 L 78 84 C 78 90 74 94 68 94 L 32 94 C 26 94 22 90 22 84 L 22 36 C 22 30 24 24 30 24 Z" fill="#fef2f2" fill-opacity="0.9" stroke="#b91c1c" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M 24 46 L 76 46 L 76 84 C 76 89 73 92 68 92 L 32 92 C 27 92 24 89 24 84 Z" fill="#dc2626" fill-opacity="0.85"/>
+      <rect x="32" y="56" width="36" height="20" rx="4" fill="#ffffff" stroke="#b91c1c" stroke-width="2.5"/>
+      <path d="M 30 32 L 30 42" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
+    </svg>`;
+
+    // 뽁뽁이(에어캡)
+    const SVG_BUBBLE_WRAP = `<svg viewBox="0 0 100 100" class="svg-icon bubble-wrap-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="12" y="18" width="76" height="64" rx="8" fill="#f0f9ff" fill-opacity="0.9" stroke="#0ea5e9" stroke-width="4"/>
+      <g fill="#ffffff" stroke="#38bdf8" stroke-width="3">
+        <circle cx="30" cy="36" r="8"/><circle cx="50" cy="36" r="8"/><circle cx="70" cy="36" r="8"/>
+        <circle cx="30" cy="64" r="8"/><circle cx="50" cy="64" r="8"/><circle cx="70" cy="64" r="8"/>
+      </g>
+      <g fill="#ffffff"><circle cx="27" cy="33" r="2.5"/><circle cx="47" cy="33" r="2.5"/><circle cx="67" cy="33" r="2.5"/><circle cx="27" cy="61" r="2.5"/><circle cx="47" cy="61" r="2.5"/><circle cx="67" cy="61" r="2.5"/></g>
+    </svg>`;
+
     // 작은 소스 유리병(빨간 소스)
     const SVG_SAUCE_BOTTLE = `<svg viewBox="0 0 100 100" class="svg-icon sauce-bottle-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="38" y="10" width="24" height="12" rx="3" fill="#16a34a" stroke="#166534" stroke-width="3"/>
@@ -1235,11 +1262,11 @@
       // 일반쓰레기 (2단계부터 등장)
       { id: 't1', name: '휴지',     bin: 'trash', icon: '🧻' },
       { id: 't2', name: '볼펜',     bin: 'trash', icon: '🖊️' },
-      { id: 't3', name: '칫솔',     bin: 'trash', icon: '🪥' },
+      { id: 't3', name: '칫솔',     bin: 'trash', icon: SVG_TOOTHBRUSH },
       { id: 't4', name: '고무장갑', bin: 'trash', icon: '🧤' },
       // 유리병 (3단계 등장)
       { id: 'g1', name: '음료 유리병', bin: 'glass', icon: SVG_GLASS_BOTTLE },
-      { id: 'g2', name: '잼 병',     bin: 'glass', icon: '🫙' },
+      { id: 'g2', name: '잼 병',     bin: 'glass', icon: SVG_JAM_JAR },
       { id: 'g3', name: '소스 병',   bin: 'glass', icon: SVG_SAUCE_BOTTLE },
       // 종이팩 (3단계 등장)
       { id: 'ct1', name: '우유갑',   bin: 'carton', icon: SVG_MILK_CARTON },
@@ -1249,7 +1276,7 @@
       { id: 'v1', name: '과자 봉지', bin: 'vinyl', icon: '🥨' },
       { id: 'v2', name: '라면 봉지', bin: 'vinyl', icon: '🍜' },
       { id: 'v3', name: '비닐봉지',  bin: 'vinyl', icon: SVG_VINYL_BAG },
-      { id: 'v4', name: '뽁뽁이',   bin: 'vinyl', icon: '🫧' }
+      { id: 'v4', name: '뽁뽁이',   bin: 'vinyl', icon: SVG_BUBBLE_WRAP }
     ];
 
     const ANIMAL_AVATARS = [
@@ -2015,7 +2042,7 @@
           if (status) status.textContent = '⏳ 불러오는 중...';
           leaderboardUnsub = EcoStorage.subscribeLeaderboard((summary, info) => {
             if (status) {
-              status.textContent = info && info.online ? '🟢 실시간 연결됨' : '⚪ 이 기기 기록만 보여요';
+              status.textContent = info && info.online ? '● 실시간 연결됨' : '⚪ 이 기기 기록만 보여요';
               status.classList.toggle('online', !!(info && info.online));
             }
             if (summary) this.renderLeaderboard(summary);
