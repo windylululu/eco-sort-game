@@ -1187,6 +1187,17 @@
       <rect x="28" y="34" width="44" height="58" rx="3" fill="none" stroke="#0369a1" stroke-width="4"/>
     </svg>`;
 
+    // 음료 캔(따개 달린 알루미늄 캔)
+    const SVG_DRINK_CAN = `<svg viewBox="0 0 100 100" class="svg-icon drink-can-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 32 14 L 68 14 L 72 22 L 72 82 L 68 90 L 32 90 L 28 82 L 28 22 Z" fill="#e5e7eb" stroke="#4b5563" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="28" y="30" width="44" height="44" fill="#ef4444"/>
+      <path d="M 28 30 L 72 30 M 28 74 L 72 74" stroke="#4b5563" stroke-width="3"/>
+      <ellipse cx="50" cy="14" rx="18" ry="4" fill="#d1d5db" stroke="#4b5563" stroke-width="3"/>
+      <rect x="44" y="9" width="12" height="6" rx="3" fill="#9ca3af" stroke="#4b5563" stroke-width="2"/>
+      <path d="M 40 46 Q 50 38 60 46 Q 50 54 40 62" stroke="#ffffff" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <path d="M 34 34 L 34 70" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.7"/>
+    </svg>`;
+
     // 작은 소스 유리병(빨간 소스)
     const SVG_SAUCE_BOTTLE = `<svg viewBox="0 0 100 100" class="svg-icon sauce-bottle-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="38" y="10" width="24" height="12" rx="3" fill="#16a34a" stroke="#166534" stroke-width="3"/>
@@ -1218,7 +1229,7 @@
       { id: 'pa3', name: '택배 상자', bin: 'paper', icon: '📦' },
       { id: 'pa4', name: '종이 쇼핑백',bin: 'paper', icon: SVG_PAPER_BAG },
       // 캔
-      { id: 'c1', name: '음료 캔',  bin: 'can', icon: '🥤' },
+      { id: 'c1', name: '음료 캔',  bin: 'can', icon: SVG_DRINK_CAN },
       { id: 'c2', name: '참치 캔',  bin: 'can', icon: '🥫' },
       { id: 'c3', name: '통조림 캔', bin: 'can', icon: '🥫' },
       // 일반쓰레기 (2단계부터 등장)
