@@ -1176,6 +1176,17 @@
       <path d="M 36 30 C 34 36 34 42 36 48" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
     </svg>`;
 
+    // 우유갑(지붕 모양 종이팩)
+    const SVG_MILK_CARTON = `<svg viewBox="0 0 100 100" class="svg-icon milk-carton-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="38" y="6" width="24" height="8" rx="1.5" fill="#e0f2fe" stroke="#0369a1" stroke-width="3"/>
+      <polygon points="28,34 38,14 62,14 72,34" fill="#f0f9ff" stroke="#0369a1" stroke-width="4" stroke-linejoin="round"/>
+      <line x1="50" y1="14" x2="50" y2="34" stroke="#0369a1" stroke-width="3"/>
+      <rect x="28" y="34" width="44" height="58" rx="3" fill="#ffffff" stroke="#0369a1" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="28" y="52" width="44" height="22" fill="#38bdf8"/>
+      <circle cx="50" cy="63" r="7" fill="#ffffff"/>
+      <rect x="28" y="34" width="44" height="58" rx="3" fill="none" stroke="#0369a1" stroke-width="4"/>
+    </svg>`;
+
     // 작은 소스 유리병(빨간 소스)
     const SVG_SAUCE_BOTTLE = `<svg viewBox="0 0 100 100" class="svg-icon sauce-bottle-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="38" y="10" width="24" height="12" rx="3" fill="#16a34a" stroke="#166534" stroke-width="3"/>
@@ -1220,7 +1231,7 @@
       { id: 'g2', name: '잼 병',     bin: 'glass', icon: '🫙' },
       { id: 'g3', name: '소스 병',   bin: 'glass', icon: SVG_SAUCE_BOTTLE },
       // 종이팩 (3단계 등장)
-      { id: 'ct1', name: '우유갑',   bin: 'carton', icon: '🥛' },
+      { id: 'ct1', name: '우유갑',   bin: 'carton', icon: SVG_MILK_CARTON },
       { id: 'ct2', name: '주스 팩',  bin: 'carton', icon: '🧃' },
       { id: 'ct3', name: '두유 팩',  bin: 'carton', icon: '🧃' },
       // 비닐 (3단계 등장)
