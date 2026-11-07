@@ -1601,6 +1601,23 @@
           utter.rate = 0.95;
           utter.pitch = 1.2;
           window.speechSynthesis.speak(utter);
+        },
+
+        // 문제 읽어 주기: 남자 어린이처럼 밝은 목소리
+        // 기기에 있는 한국어 남자 목소리(엣지의 InJoon·Hyunsu 등)를 찾아 음높이를 올린다.
+        // 남자 목소리가 없는 기기에서는 기본 한국어 목소리로 밝게 읽는다.
+        speakQuestion(text) {
+          if (isMuted || !('speechSynthesis' in window)) return;
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = 'ko-KR';
+          const voices = window.speechSynthesis.getVoices().filter(v => /^ko/i.test(v.lang));
+          const male = voices.find(v => /injoon|hyunsu|bongjin|gookmin|male|남/i.test(v.name));
+          const voice = male || voices[0];
+          if (voice) utter.voice = voice;
+          utter.pitch = male ? 1.7 : 1.45;  // 높은 음 = 어린이 느낌
+          utter.rate = 1.05;                // 살짝 빠르게 = 밝은 느낌
+          window.speechSynthesis.speak(utter);
         }
       };
     })();
@@ -1907,7 +1924,7 @@
           nameElem.textContent = item.name;
           progressText.textContent = `문제 ${currentQIndex + 1} / 10`;
           leafCountText.textContent = earnedLeaves;
-          feedbackText.textContent = '물건을 손으로 끌어서 알맞은 통에 쏙 넣어 보세요!';
+          feedbackText.textContent = '물건을 끌어서 알맞은 통에 쏙! (물건을 누르면 다시 들려줘요)';
 
           itemElem.classList.remove('suck-in', 'dragging');
           itemElem.style.transform = 'translate(0px, 0px)';
@@ -1916,6 +1933,9 @@
           document.querySelectorAll('.recycle-bin').forEach(b => {
             b.classList.remove('drag-over', 'highlight-correct');
           });
+
+          // 문제 읽어 주기 (물건을 한 번 누르면 다시 들려줌)
+          setTimeout(() => SoundAudio.speakQuestion(`${item.name}! 어느 통에 넣을까?`), 250);
         },
 
         // 통 입구로 쏙 흡입되는 애니메이션
@@ -2139,6 +2159,9 @@
             if (!hasMoved) {
               item.classList.remove('dragging');
               item.style.transform = 'translate(0px, 0px)';
+              // 물건을 그냥 한 번 누르면 문제를 다시 읽어 준다
+              const cur = roundQuestions[currentQIndex];
+              if (cur && !isDropLocked) SoundAudio.speakQuestion(`${cur.name}! 어느 통에 넣을까?`);
               return;
             }
 
@@ -2201,6 +2224,11 @@
     };
 
     function startApp() {
+      // 브라우저 목소리 목록을 미리 불러 둔다(첫 문제부터 남자 목소리를 고를 수 있게)
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      }
       adjustCanvasScale();
       GameApp.init();
       setTimeout(adjustCanvasScale, 50);
