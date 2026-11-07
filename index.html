@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>분리배출 지구 지킴이</title>
+  <meta name="description" content="어린이를 위한 분리배출 학습 놀이 게임 - 쓰레기를 알맞은 분리배출함에 넣고 지구를 지켜보세요!" />
+  <meta property="og:title" content="분리배출 지구 지킴이" />
+  <meta property="og:description" content="어린이를 위한 분리배출 학습 놀이 게임 - 쓰레기를 알맞은 분리배출함에 넣고 지구를 지켜보세요!" />
+  <meta property="og:type" content="website" />
+  <style>
+    :root {
+      --bg-sky: #e0f2fe;
+      --bg-ground: #86efac;
+      --primary: #15803d;
+      --primary-light: #22c55e;
+      --primary-dark: #166534;
+      --accent-leaf: #4ade80;
+      --wood: #b45309;
+      --text-main: #1f2937;
+      --text-muted: #4b5563;
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --radius-lg: 36px;
+      --radius-md: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    }
+
+    /* 외곽 뷰포트 레터박스 처리 (100dvh 지원) */
+    html, body {
+      width: 100%;
+      height: 100%;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #viewport-wrapper {
+      width: 100%;
+      height: 100%;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #60a5fa 0%, #1d4ed8 100%);
+    }
+
+    /* 1920x1080 기준 캔버스 (자동 scale 조정) */
+    #game-canvas {
+      width: 1920px;
+      height: 1080px;
+      min-width: 1920px;
+      min-height: 1080px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      transform-origin: center center;
+      background: linear-gradient(180deg, #bae6fd 0%, #dcfce7 65%, #bbf7d0 100%);
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+
+    /* 기본 공통 헤더 (결과, 리더보드 화면용 오버레이 헤더) */
+    header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 90px;
+      padding: 0 40px;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: var(--card-bg);
+      padding: 10px 28px;
+      border-radius: 999px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 16px;
+    }
+
+    .icon-btn {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      font-size: 2.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+      transition: transform 0.1s;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+
+    /* 첫 화면 리더보드 바로 가기 버튼 */
+    .board-link-btn {
+      position: absolute;
+      z-index: 70;
+      padding: 18px 34px;
+      font-size: 2.1rem;
+      font-weight: 900;
+      font-family: inherit;
+      color: #92400e;
+      background: linear-gradient(180deg, #fef9c3, #fde047);
+      border: 5px solid #ffffff;
+      border-radius: 999px;
+      box-shadow: 0 8px 0 #eab308, 0 14px 26px rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .board-link-btn:hover { transform: translateY(-3px) scale(1.04); }
+    .board-link-btn:active { transform: translateY(4px); box-shadow: 0 3px 0 #eab308; }
+
+    .live-status {
+      display: inline-block;
+      margin: 6px 0 4px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #64748b;
+      background: #f1f5f9;
+    }
+    .live-status.online { color: #15803d; background: #dcfce7; }
+
+    /* 첫 화면, 단계 고르기 화면용 우측 상단 플로팅 소리·집 버튼 */
+    .corner-quick-btns {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 70;
+    }
+
+    .corner-quick-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 3.5px solid rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      font-size: 1.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.12s, background-color 0.12s, box-shadow 0.12s;
+    }
+    .corner-quick-btn:hover {
+      transform: scale(1.08);
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+    .corner-quick-btn:active {
+      transform: scale(0.92);
+    }
+
+    main {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease-in-out;
+    }
+    .screen.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.97);
+      border-radius: var(--radius-lg);
+      padding: 40px 50px;
+      box-shadow: 0 20px 50px rgba(22, 101, 52, 0.1), 0 6px 16px rgba(0, 0, 0, 0.04);
+      border: 6px solid #ffffff;
+      outline: 4px solid #bbf7d0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 1400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .btn-big {
+      background: linear-gradient(180deg, #4ade80, #16a34a);
+      color: white;
+      border: 4px solid #ffffff;
+      border-radius: var(--radius-md);
+      font-size: 2.1rem;
+      font-weight: 900;
+      padding: 18px 50px;
+      cursor: pointer;
+      box-shadow: 0 8px 0 #15803d, 0 14px 24px rgba(22, 163, 74, 0.3);
+      transition: transform 0.1s, box-shadow 0.1s;
+      min-width: 280px;
+    }
+    .btn-big:active {
+      transform: translateY(5px);
+      box-shadow: 0 3px 0 #15803d, 0 6px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    /* ------------------------------------------------------------- */
+    /* ------------------------------------------------------------- */
+    /* [화면 1 & 2] main.png & stage.png 전체화면 배경 및 투명 누름 칸 */
+    /* ------------------------------------------------------------- */
+    #screen-start {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      background: url('main.png') center center / 100% 100% no-repeat;
+      overflow: hidden;
+      padding: 0;
+    }
+    #screen-level {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      background: url('stage.png') center center / 100% 100% no-repeat;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .hotspot {
+      position: absolute;
+      cursor: pointer;
+      background: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background-color 0.15s ease, box-shadow 0.2s ease, transform 0.1s ease;
+      z-index: 10;
+    }
+    .hotspot:hover {
+      background-color: rgba(255, 255, 255, 0.22);
+    }
+    .hotspot:active {
+      transform: scale(0.985);
+    }
+
+    /* 선택된 항목: 두꺼운 노란 테두리, 빛나는 효과, 우상단 ✔ */
+    .hotspot.selected {
+      box-shadow: 0 0 0 7px #facc15, 0 0 28px #facc15, inset 0 0 18px rgba(254, 240, 138, 0.45);
+    }
+    .selected-check {
+      display: none;
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 44px;
+      height: 44px;
+      background: #facc15;
+      color: #15803d;
+      border: 4px solid white;
+      border-radius: 50%;
+      font-size: 2.2rem;
+      font-weight: 900;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      pointer-events: none;
+      z-index: 30;
+      line-height: 1;
+    }
+    .hotspot.selected .selected-check {
+      display: flex;
+      animation: checkPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes checkPop {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+
+    /* ?debug 모드: 반투명 빨간 상자 표시 */
+    .debug-mode .hotspot {
+      background: rgba(239, 68, 68, 0.38) !important;
+      border: 2px dashed #ef4444 !important;
+    }
+    .debug-mode .hotspot::after {
+      content: attr(data-label);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.85);
+      pointer-events: none;
+    }
+
+    .teacher-progress {
+      position: absolute;
+      left: 0; bottom: 0; top: 0;
+      width: 0%;
+      background: rgba(34, 197, 94, 0.55);
+      pointer-events: none;
+      transition: width 0.1s linear;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* [화면 3] 게임 화면 (10% 상단, 35% 물건, 50% 분리수거통 정밀 분할) */
+    /* ------------------------------------------------------------- */
+    #screen-game {
+      position: absolute;
+      inset: 0;
+      padding: 0;
+      justify-content: flex-start;
+      height: 1080px;
+    }
+
+    /* 맨 위 줄: 10% (약 108px) */
+    .game-top-section {
+      width: 100%;
+      height: 108px;
+      padding: 0 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .game-top-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .game-top-center {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .game-top-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .badge-pill {
+      font-size: 1.7rem;
+      font-weight: 900;
+      background: white;
+      padding: 10px 26px;
+      border-radius: 999px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    }
+    .leaf-count-pill {
+      background: #dcfce7;
+      color: #15803d;
+      border: 3px solid #86efac;
+    }
+
+    /* 가운데 물건 카드 구역: 35% (약 378px) */
+    .game-item-section {
+      width: 100%;
+      height: 378px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* 이전보다 1.5배 커진 물건 카드 (300px * 300px) */
+    .draggable-item {
+      width: 290px;
+      height: 270px;
+      background: #ffffff;
+      border-radius: 44px;
+      box-shadow: 0 16px 36px rgba(22, 101, 52, 0.12), 0 4px 12px rgba(0,0,0,0.04);
+      border: 6px solid #ffffff;
+      outline: 4px solid #bbf7d0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+      z-index: 500;
+      position: relative;
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .draggable-item.dragging {
+      cursor: grabbing;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+      transition: none !important;
+    }
+    .draggable-item.suck-in {
+      pointer-events: none;
+      transition: transform 0.35s ease-in, opacity 0.35s ease-in !important;
+    }
+
+    .item-graphic {
+      font-size: 8rem;
+      line-height: 1;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .item-graphic svg {
+      width: 125px;
+      height: 125px;
+      display: block;
+    }
+    .bin-icon svg {
+      width: 1em;
+      height: 1em;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .review-item svg {
+      width: 1.25em;
+      height: 1.25em;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .item-name {
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin-top: 10px;
+      pointer-events: none;
+      color: #1e293b;
+    }
+
+    .feedback-bubble {
+      margin-top: 18px;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 12px 40px;
+      border-radius: 999px;
+      font-size: 2rem;
+      font-weight: 900;
+      color: #166534;
+      border: 3px solid #bbf7d0;
+      box-shadow: 0 6px 20px rgba(22, 101, 52, 0.08);
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 아래쪽 분리수거통 구역: 50% (약 540px) */
+    .game-bins-section {
+      width: 100%;
+      height: 540px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-bottom: 40px; /* 바닥에서 40px 띄워 바닥에 붙지 않음 */
+    }
+
+    .bins-container {
+      width: 92%;
+      max-width: 1760px;
+      height: 480px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      z-index: 20;
+    }
+
+    /* 열린 뚜껑 입체 분리배출 통 기본 스타일 (밝고 화사한 파스텔, 하얀 테두리, 부드러운 그림자) */
+    .recycle-bin {
+      flex: 1;
+      height: 460px;
+      border-radius: 36px 36px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 14px 28px;
+      cursor: pointer;
+      position: relative;
+      border: 5px solid #ffffff;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+    }
+
+    /* 뚜껑이 열려있는 투입구 시각 효과 (Open Lid Rim & Dark Slot) */
+    .bin-open-rim {
+      width: 92%;
+      height: 46px;
+      background: rgba(255, 255, 255, 0.65);
+      border: 3px solid #ffffff;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.9), 0 4px 8px rgba(0,0,0,0.06);
+    }
+    .bin-open-hole {
+      width: 82%;
+      height: 24px;
+      background: rgba(15, 23, 42, 0.35);
+      border-radius: 999px;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.35);
+    }
+
+    .recycle-bin.drag-over {
+      transform: scale(1.08) translateY(-18px);
+      box-shadow: 0 0 0 8px #fde047, 0 24px 45px rgba(0,0,0,0.2);
+      filter: brightness(1.05);
+    }
+    .recycle-bin.highlight-correct {
+      animation: pulseGlow 0.6s infinite alternate;
+    }
+
+    /* 1단계 (통 3개): 화면을 넓게 쓰며 아주 큼직하고 듬직한 통 */
+    .bins-container.count-3 .recycle-bin {
+      max-width: 520px;
+      height: 470px;
+    }
+    .bins-container.count-3 .bin-icon { font-size: 7.2rem; }
+    .bins-container.count-3 .bin-name { font-size: 2.8rem; }
+    .bins-container.count-3 .bin-open-rim { height: 56px; }
+    .bins-container.count-3 .bin-open-hole { height: 30px; }
+
+    /* 2단계 (통 4개): 균형 잡힌 대형 통 */
+    .bins-container.count-4 .recycle-bin {
+      max-width: 400px;
+      height: 460px;
+    }
+    .bins-container.count-4 .bin-icon { font-size: 6rem; }
+    .bins-container.count-4 .bin-name { font-size: 2.4rem; }
+    .bins-container.count-4 .bin-open-rim { height: 50px; }
+    .bins-container.count-4 .bin-open-hole { height: 26px; }
+
+    /* 3단계 (통 7개): 한 줄에 7개가 겹치지 않고 쏙 들어가는 통 */
+    .bins-container.count-7 {
+      gap: 16px;
+    }
+    .bins-container.count-7 .recycle-bin {
+      max-width: 230px;
+      height: 450px;
+      padding: 14px 8px 24px;
+    }
+    .bins-container.count-7 .bin-icon { font-size: 4.2rem; }
+    .bins-container.count-7 .bin-name { font-size: 1.8rem; letter-spacing: -1px; }
+    .bins-container.count-7 .bin-open-rim { height: 40px; }
+    .bins-container.count-7 .bin-open-hole { height: 20px; }
+
+    .bin-icon { margin: 4px 0 2px; }
+    .bin-name {
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    .bin-cute-face {
+      margin: 6px 0 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    .bin-cute-face svg {
+      width: 168px;
+      height: 72px;
+      max-width: 88%;
+      display: block;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+    .bins-container.count-7 .bin-cute-face svg {
+      width: 140px;
+      height: 60px;
+    }
+
+    /* 파스텔 그라데이션, 하얀 테두리, 통별 진한 글씨 색상 */
+    .bin-plastic {
+      background: linear-gradient(180deg, #bae6fd 0%, #7dd3fc 45%, #38bdf8 100%);
+      box-shadow: 0 14px 28px rgba(2, 132, 199, 0.16);
+    }
+    .bin-plastic .bin-name {
+      color: #0369a1;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .bin-paper {
+      background: linear-gradient(180deg, #fef9c3 0%, #fef08a 45%, #facc15 100%);
+      box-shadow: 0 14px 28px rgba(202, 138, 4, 0.16);
+    }
+    .bin-paper .bin-name {
+      color: #854d0e;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .bin-can {
+      background: linear-gradient(180deg, #dcfce7 0%, #86efac 45%, #4ade80 100%);
+      box-shadow: 0 14px 28px rgba(22, 163, 74, 0.16);
+    }
+    .bin-can .bin-name {
+      color: #166534;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .bin-trash {
+      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 45%, #cbd5e1 100%);
+      box-shadow: 0 14px 28px rgba(71, 85, 105, 0.16);
+    }
+    .bin-trash .bin-name {
+      color: #334155;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .bin-glass {
+      background: linear-gradient(180deg, #faf5ff 0%, #e9d5ff 45%, #c084fc 100%);
+      box-shadow: 0 14px 28px rgba(147, 51, 234, 0.16);
+    }
+    .bin-glass .bin-name {
+      color: #6b21a8;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .bin-carton {
+      background: linear-gradient(180deg, #ecfeff 0%, #a5f3fc 45%, #22d3ee 100%);
+      box-shadow: 0 14px 28px rgba(8, 145, 178, 0.16);
+    }
+    .bin-carton .bin-name {
+      color: #0e7490;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .bin-vinyl {
+      background: linear-gradient(180deg, #fdf2f8 0%, #fbcfe8 45%, #f472b6 100%);
+      box-shadow: 0 14px 28px rgba(219, 39, 119, 0.16);
+    }
+    .bin-vinyl .bin-name {
+      color: #9d174d;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    /* 게임 화면, 결과 화면, 리더보드, 교사 화면 공통 밝고 화사한 파스텔 배경 */
+    #screen-game, #screen-result, #screen-leaderboard, #screen-teacher {
+      background: linear-gradient(180deg, #e0f2fe 0%, #f0fdf4 45%, #dcfce7 100%);
+    }
+
+    @keyframes pulseGlow {
+      from { transform: scale(1.04); filter: drop-shadow(0 0 10px #facc15); }
+      to   { transform: scale(1.12); filter: drop-shadow(0 0 28px #facc15); }
+    }
+    @keyframes leafFly {
+      0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(360deg); opacity: 0; }
+    }
+    .leaf-particle {
+      position: fixed;
+      pointer-events: none;
+      font-size: 3.2rem;
+      z-index: 9999;
+      animation: leafFly 0.85s forwards ease-in-out;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* [화면 4, 5, 6] 결과, 리더보드, 교사 화면                      */
+    /* ------------------------------------------------------------- */
+    .result-leaves {
+      font-size: 5.5rem;
+      font-weight: 900;
+      color: #15803d;
+      margin: 16px 0;
+    }
+    .wrong-review-box {
+      width: 100%;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 22px;
+      margin: 16px 0 32px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .review-grid {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .review-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      padding: 12px 24px;
+      border-radius: 18px;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .earth-stage {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 12px 0;
+    }
+    .earth-svg {
+      width: 100%;
+      height: 100%;
+      transition: filter 0.8s ease-in-out;
+    }
+    .today-champion-badge {
+      background: #fef3c7;
+      border: 4px solid #f59e0b;
+      padding: 12px 36px;
+      border-radius: 999px;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #92400e;
+      margin-bottom: 16px;
+    }
+    .ranking-list {
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .rank-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 18px 28px;
+      border-radius: 20px;
+      border: 2px solid #e2e8f0;
+      font-size: 1.6rem;
+      font-weight: 900;
+      box-shadow: 0 4px 10px rgba(22, 101, 52, 0.05);
+    }
+
+    .teacher-panel {
+      width: 100%;
+      max-width: 1300px;
+      text-align: left;
+      padding: 36px 44px;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: var(--radius-lg);
+      border: 6px solid #ffffff;
+      outline: 4px solid #bbf7d0;
+      box-shadow: 0 20px 50px rgba(22, 101, 52, 0.1);
+    }
+    .admin-section {
+      background: #f8fafc;
+      padding: 24px 30px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+    .admin-section h3 {
+      font-size: 1.8rem;
+      margin-bottom: 16px;
+      color: #1e293b;
+    }
+    .class-manage-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .class-item-chip {
+      background: #e2e8f0;
+      padding: 10px 20px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.4rem;
+      font-weight: 800;
+    }
+    .small-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 1.3rem;
+    }
+    .stats-table th, .stats-table td {
+      border: 1px solid #cbd5e1;
+      padding: 12px;
+      text-align: center;
+    }
+    .stats-table th { background: #f8fafc; font-weight: 900; }
+  </style>
+</head>
+<body>
+
+  <div id="viewport-wrapper">
+    <div id="game-canvas">
+
+      <!-- 시작, 결과, 리더보드용 일반 헤더 -->
+      <header id="standard-header">
+        <div class="header-info">
+          <span id="current-player-avatar">🌱</span>
+          <span id="current-player-label">지구 지킴이 대기 중</span>
+        </div>
+        <div class="header-btns">
+          <button class="icon-btn sound-toggle-btn" id="sound-toggle-btn-std" title="소리 켜기/끄기">🔊</button>
+          <button class="icon-btn home-nav-btn" id="home-btn-std" title="처음으로">🏠</button>
+        </div>
+      </header>
+
+      <main>
+        <!-- [1] 시작 화면 (main.png 전체화면 배경 + 투명 누름 칸) -->
+        <section class="screen active" id="screen-start">
+          <!-- 4개 고정 반 누름 칸 -->
+          <div class="hotspot class-btn" data-class-id="c1" data-label="햇살반" style="left: 4.1%; top: 37.4%; width: 14.8%; height: 11.7%; border-radius: 26px;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot class-btn" data-class-id="c2" data-label="나무반" style="left: 19.6%; top: 37.4%; width: 14.4%; height: 11.7%; border-radius: 26px;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot class-btn" data-class-id="c3" data-label="꽃잎반" style="left: 4.1%; top: 50.8%; width: 14.6%; height: 11.4%; border-radius: 26px;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot class-btn" data-class-id="c4" data-label="무지개반" style="left: 19.1%; top: 50.8%; width: 14.8%; height: 11.4%; border-radius: 26px;">
+            <span class="selected-check">✔</span>
+          </div>
+
+          <!-- 12개 동물 누름 칸 (너비 9.0%, 높이 15.9%) -->
+          <!-- 1줄 (위 34.2%): 강아지, 고양이, 토끼, 곰 -->
+          <div class="hotspot animal-btn-hs" data-animal-id="dog" data-label="강아지" style="left: 55.6%; top: 34.2%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="cat" data-label="고양이" style="left: 65.8%; top: 34.2%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="rabbit" data-label="토끼" style="left: 76.1%; top: 34.2%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="bear" data-label="곰" style="left: 86.2%; top: 34.2%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+
+          <!-- 2줄 (위 50.5%): 사자, 펭귄, 여우, 판다 -->
+          <div class="hotspot animal-btn-hs" data-animal-id="lion" data-label="사자" style="left: 55.6%; top: 50.5%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="penguin" data-label="펭귄" style="left: 65.8%; top: 50.5%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="fox" data-label="여우" style="left: 76.1%; top: 50.5%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="panda" data-label="판다" style="left: 86.2%; top: 50.5%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+
+          <!-- 3줄 (위 66.7%): 원숭이, 코끼리, 병아리, 다람쥐 -->
+          <div class="hotspot animal-btn-hs" data-animal-id="monkey" data-label="원숭이" style="left: 55.6%; top: 66.7%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="elephant" data-label="코끼리" style="left: 65.8%; top: 66.7%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="chick" data-label="병아리" style="left: 76.1%; top: 66.7%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+          <div class="hotspot animal-btn-hs" data-animal-id="squirrel" data-label="다람쥐" style="left: 86.2%; top: 66.7%; width: 9.0%; height: 15.9%; border-radius: 50%;">
+            <span class="selected-check">✔</span>
+          </div>
+
+          <!-- 시작하기 버튼 (왼쪽 34.6%, 위 84.0%, 너비 30.1%, 높이 13.3%) -->
+          <div class="hotspot" id="start-game-btn" data-label="시작하기" style="left: 34.6%; top: 84.0%; width: 30.1%; height: 13.3%; border-radius: 999px;"></div>
+
+          <!-- 리더보드 바로 가기 -->
+          <button class="board-link-btn" id="open-leaderboard-btn" type="button" style="left: 69%; top: 86.5%;">🏆 리더보드 보기</button>
+
+          <!-- 우측 상단 소리·집 버튼 (선생님 버튼 왼쪽) -->
+          <div class="corner-quick-btns" style="left: 77.2%; top: 2.7%; height: 6.9%;">
+            <button class="corner-quick-btn sound-toggle-btn" title="소리 켜기/끄기">🔊</button>
+            <button class="corner-quick-btn home-nav-btn" title="처음으로">🏠</button>
+          </div>
+
+          <!-- 선생님 설정 (왼쪽 87.0%, 위 2.7%, 너비 11.5%, 높이 6.9%) -->
+          <div class="hotspot teacher-gate-btn" id="teacher-gate-btn" data-label="선생님" style="left: 87.0%; top: 2.7%; width: 11.5%; height: 6.9%; border-radius: 999px; overflow: hidden;">
+            <div class="teacher-progress" id="teacher-progress" style="border-radius: 999px;"></div>
+          </div>
+        </section>
+
+        <!-- [2] 단계 선택 화면 (stage.png 전체화면 배경 + 투명 누름 칸) -->
+        <section class="screen" id="screen-level">
+          <!-- 우측 상단 소리·집 버튼 -->
+          <div class="corner-quick-btns" style="right: 3.5%; top: 2.7%; height: 6.9%;">
+            <button class="corner-quick-btn sound-toggle-btn" title="소리 켜기/끄기">🔊</button>
+            <button class="corner-quick-btn home-nav-btn" title="처음으로">🏠</button>
+          </div>
+
+          <!-- 1단계 카드 (왼쪽 3.7%, 위 35.6%, 너비 29.4%, 높이 46.8%) -->
+          <div class="hotspot level-card-btn" data-level="1" data-label="1단계 카드" style="left: 3.7%; top: 35.6%; width: 29.4%; height: 46.8%; border-radius: 46px;">
+            <span class="selected-check">✔</span>
+          </div>
+
+          <!-- 2단계 카드 (왼쪽 33.3%, 위 35.6%, 너비 29.6%, 높이 46.3%) -->
+          <div class="hotspot level-card-btn" data-level="2" data-label="2단계 카드" style="left: 33.3%; top: 35.6%; width: 29.6%; height: 46.3%; border-radius: 46px;">
+            <span class="selected-check">✔</span>
+          </div>
+
+          <!-- 3단계 카드 (왼쪽 63.5%, 위 34.0%, 너비 33.1%, 높이 48.4%) -->
+          <div class="hotspot level-card-btn" data-level="3" data-label="3단계 카드" style="left: 63.5%; top: 34.0%; width: 33.1%; height: 48.4%; border-radius: 46px;">
+            <span class="selected-check">✔</span>
+          </div>
+
+          <!-- 뒤로 (왼쪽 23.9%, 위 85.5%, 너비 17.3%, 높이 10.6%) -->
+          <div class="hotspot" id="btn-back-to-start" data-label="뒤로" style="left: 23.9%; top: 85.5%; width: 17.3%; height: 10.6%; border-radius: 999px;"></div>
+
+          <!-- 놀이 시작 (왼쪽 46.9%, 위 84.5%, 너비 27.5%, 높이 12.7%) -->
+          <div class="hotspot" id="btn-start-stage-game" data-label="놀이 시작" style="left: 46.9%; top: 84.5%; width: 27.5%; height: 12.7%; border-radius: 999px;"></div>
+        </section>
+
+        <!-- [3] 게임 플레이 화면 (10% 상단 / 35% 물건 / 50% 분리수거통) -->
+        <section class="screen" id="screen-game">
+          <!-- 맨 위 줄: 10% (108px) -->
+          <div class="game-top-section">
+            <div class="game-top-left">
+              <div class="badge-pill">
+                <span id="game-player-avatar">🌱</span>
+                <span id="game-player-label">햇살반 강아지</span>
+              </div>
+            </div>
+            <div class="game-top-center">
+              <div class="badge-pill" id="game-progress-text">문제 1 / 10</div>
+              <div class="badge-pill leaf-count-pill">🍃 모은 나뭇잎: <span id="game-leaf-count">0</span>장</div>
+            </div>
+            <div class="game-top-right">
+              <button class="icon-btn sound-toggle-btn" id="sound-toggle-btn-game" title="소리 켜기/끄기">🔊</button>
+              <button class="icon-btn home-nav-btn" id="home-btn-game" title="처음으로">🏠</button>
+            </div>
+          </div>
+
+          <!-- 가운데 물건 구역: 35% (378px) -->
+          <div class="game-item-section">
+            <div class="draggable-item" id="active-item">
+              <div class="item-graphic" id="active-item-icon">🧴</div>
+              <div class="item-name" id="active-item-name">페트병</div>
+            </div>
+            <div class="feedback-bubble" id="game-feedback-text">
+              물건을 손으로 끌어서 알맞은 통에 쏙 넣어 보세요!
+            </div>
+          </div>
+
+          <!-- 분리수거통 구역: 50% (540px) - 바닥에서 40px 떠있음 -->
+          <div class="game-bins-section">
+            <div class="bins-container" id="bins-container">
+              <!-- JS에서 통 개수(3, 4, 7개)에 따라 뚜껑 열린 입체 통 동적 생성 -->
+            </div>
+          </div>
+        </section>
+
+        <!-- [4] 결과 화면 -->
+        <section class="screen" id="screen-result">
+          <div class="game-card">
+            <h2 style="font-size: 3.2rem; font-weight: 900;">지구 지키기 성공! 🎉</h2>
+            <div class="result-leaves">🍃 +<span id="result-leaf-val">0</span>장 획득!</div>
+            
+            <div style="font-weight: 900; font-size: 1.6rem; margin-top: 10px;">헷갈렸던 물건 다시보기</div>
+            <div class="wrong-review-box">
+              <div class="review-grid" id="wrong-review-grid"></div>
+            </div>
+
+            <div style="display:flex; gap: 24px;">
+              <button class="btn-big" onclick="GameApp.goToLevelSelect()">다시 하기 🔄</button>
+              <button class="btn-big" style="background: linear-gradient(180deg, #38bdf8, #0284c7);" onclick="GameApp.goToLeaderboard()">리더보드 보기 🏆</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- [5] 리더보드 화면 -->
+        <section class="screen" id="screen-leaderboard">
+          <div class="game-card">
+            <h2 style="font-size: 3rem; font-weight: 900; margin-bottom: 8px;">우리들의 초록 지구 만들기</h2>
+            <div class="today-champion-badge" id="leaderboard-champion">오늘의 지구 지킴이: 계산 중...</div>
+            <div class="live-status" id="leaderboard-live">⏳ 불러오는 중...</div>
+
+            <div class="earth-stage">
+              <svg class="earth-svg" id="earth-graphic" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="#38bdf8"/>
+                <path d="M 28,30 Q 38,18 55,25 Q 70,30 65,48 Q 50,55 42,42 Z" fill="#22c55e" />
+                <path d="M 52,60 Q 68,54 75,70 Q 62,86 45,80 Q 40,65 52,60 Z" fill="#22c55e" />
+                <path d="M 18,52 Q 30,48 32,62 Q 22,76 15,65 Z" fill="#22c55e" />
+              </svg>
+            </div>
+            <p style="font-size: 1.5rem; color: #475569; font-weight: 800; margin-bottom: 20px;" id="earth-desc">
+              나뭇잎을 모을수록 지구가 생기를 되찾아요!
+            </p>
+
+            <div class="ranking-list" id="ranking-list-container"></div>
+            <button class="btn-big" onclick="GameApp.goToStart()">처음으로 가기 🏠</button>
+          </div>
+        </section>
+
+        <!-- [6] 교사 화면 -->
+        <section class="screen" id="screen-teacher">
+          <div class="game-card teacher-panel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+              <h2 style="font-size: 2.4rem; font-weight: 900;">👩‍🏫 선생님 안심 설정실</h2>
+              <button class="btn-big" style="min-width:auto; padding: 12px 28px; font-size:1.5rem;" onclick="GameApp.goToStart()">나가기</button>
+            </div>
+
+            <!-- 반 추가/이름바꾸기/지우기 제외 (고정 4반 운영) -->
+
+            <div class="admin-section">
+              <h3>📊 아이들이 자주 헷갈린 물건 순위</h3>
+              <table class="stats-table">
+                <thead>
+                  <tr>
+                    <th>물건 이름</th>
+                    <th>틀린 횟수</th>
+                    <th>주로 잘못 넣은 통</th>
+                  </tr>
+                </thead>
+                <tbody id="teacher-stats-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="admin-section" style="border: 3px dashed #ef4444;">
+              <h3 style="color:#ef4444;">⚠️ 데이터 관리</h3>
+              <p style="font-size: 1.2rem; color:#64748b; margin-bottom: 16px;">모든 게임 플레이 기록과 점수를 처음 상태로 초기화합니다.</p>
+              <button class="btn-big" style="background:#ef4444; box-shadow:0 8px 0 #b91c1c; font-size:1.4rem; padding:14px 28px;" onclick="TeacherView.resetData()">모든 기록 초기화하기</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- 파이어베이스 연결 (설정값은 firebase-config.js) -->
+  <script src="firebase-config.js"></script>
+  <script>
+    // 파이어베이스 준비가 끝나면 { db, api } 로, 못 쓰면 null 로 풀리는 약속
+    window.EcoFirebaseReady = new Promise(resolve => {
+      window.__resolveEcoFirebase = (fb) => { window.EcoFirebase = fb; resolve(fb); };
+      setTimeout(() => resolve(null), 8000); // 8초 안에 연결이 안 되면 이 기기에 저장
+    });
+  </script>
+  <script type="module">
+    const cfg = window.ECO_FIREBASE_CONFIG;
+    if (!cfg || !cfg.apiKey) {
+      console.info('[파이어베이스] 설정값이 없어 이 기기에 저장합니다.');
+      window.__resolveEcoFirebase(null);
+    } else {
+      try {
+        const V = '10.12.2';
+        const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+        const fs = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+        const app = initializeApp(cfg);
+        const db = fs.getFirestore(app);
+        window.__resolveEcoFirebase({ db, api: fs });
+        console.info('[파이어베이스] 연결 준비 완료');
+      } catch (e) {
+        console.warn('[파이어베이스] 불러오기 실패, 이 기기에 저장합니다.', e);
+        window.__resolveEcoFirebase(null);
+      }
+    }
+  </script>
+  <script>
+    /**
+     * =====================================================================
+     * [0] 1920x1080 뷰포트 자동 스케일링 엔진
+     * =====================================================================
+     */
+    let globalScale = 1;
+    function adjustCanvasScale() {
+      const wrapper = document.getElementById('viewport-wrapper');
+      const canvas = document.getElementById('game-canvas');
+      if (!canvas) return;
+
+      const winW = (wrapper && wrapper.clientWidth) || window.innerWidth || document.documentElement.clientWidth || 1920;
+      const winH = (wrapper && wrapper.clientHeight) || window.innerHeight || document.documentElement.clientHeight || 1080;
+
+      // 1920x1080 전체가 창의 너비와 높이 중 더 작은 쪽에 맞춰 줄어들어 어디도 잘리지 않도록 계산
+      globalScale = Math.min(winW / 1920, winH / 1080);
+      canvas.style.transform = `translate(-50%, -50%) scale(${globalScale})`;
+    }
+    adjustCanvasScale();
+    window.addEventListener('resize', adjustCanvasScale);
+    window.addEventListener('orientationchange', () => setTimeout(adjustCanvasScale, 150));
+    window.addEventListener('DOMContentLoaded', adjustCanvasScale);
+    window.addEventListener('load', adjustCanvasScale);
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(() => adjustCanvasScale());
+      const wrapperEl = document.getElementById('viewport-wrapper');
+      if (wrapperEl) ro.observe(wrapperEl);
+      ro.observe(document.body);
+    }
+    setTimeout(adjustCanvasScale, 100);
+    setTimeout(adjustCanvasScale, 500);
+
+    /**
+     * =====================================================================
+     * [1] 물건 및 분리배출 정의 데이터베이스
+     * =====================================================================
+     */
+    const SVG_VINYL_BAG = `<svg viewBox="0 0 100 100" class="svg-icon vinyl-bag-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 28 22 C 28 12 36 8 42 8 C 46 8 48 14 48 24 L 48 34 C 48 37 52 37 52 37 C 52 37 56 37 56 34 L 56 24 C 56 14 58 8 62 8 C 68 8 76 12 76 22 L 82 82 C 82 88 77 92 70 92 L 30 92 C 23 92 18 88 18 82 Z" fill="#fdf2f8" fill-opacity="0.9" stroke="#db2777" stroke-width="4.5" stroke-linejoin="round"/>
+      <path d="M 40 22 C 40 15 42 14 44 14 C 46 14 46 18 46 26 L 46 32 C 46 36 50 40 52 40 C 54 40 58 36 58 32 L 58 26 C 58 18 58 14 60 14 C 62 14 64 15 64 22 L 64 36 C 64 44 58 48 52 48 C 46 48 40 44 40 36 Z" fill="#ffffff" fill-opacity="0.95" stroke="#db2777" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M 28 48 Q 38 66 34 82" stroke="#f472b6" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 72 48 Q 62 66 66 82" stroke="#f472b6" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+      <path d="M 44 54 Q 50 68 56 54" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
+    </svg>`;
+
+    const SVG_PAPER_BAG = `<svg viewBox="0 0 100 100" class="svg-icon paper-bag-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 38 32 C 38 12 62 12 62 32" stroke="#78350f" stroke-width="5.5" stroke-linecap="round"/>
+      <polygon points="22,32 78,32 74,90 26,90" fill="#d97706" stroke="#92400e" stroke-width="4.5" stroke-linejoin="round"/>
+      <polygon points="22,32 33,32 35,90 26,90" fill="#b45309" opacity="0.5"/>
+      <line x1="22" y1="40" x2="78" y2="40" stroke="#78350f" stroke-width="2.5" stroke-dasharray="3,2"/>
+      <line x1="50" y1="42" x2="50" y2="88" stroke="#fef3c7" stroke-width="2.5" opacity="0.6"/>
+    </svg>`;
+
+    const BIN_INFO = {
+      plastic: { id: 'plastic', name: '플라스틱', icon: '🧴', cls: 'bin-plastic', tip: '라벨을 떼고 플라스틱 통에!' },
+      paper:   { id: 'paper',   name: '종이',     icon: '📦', cls: 'bin-paper',   tip: '테이프를 떼고 종이 통에!' },
+      can:     { id: 'can',     name: '캔',       icon: '🥫', cls: 'bin-can',     tip: '헹궈서 캔 통에!' },
+      trash:   { id: 'trash',   name: '일반쓰레기', icon: '🗑️', cls: 'bin-trash',   tip: '다시 쓸 수 없어서 일반쓰레기!' },
+      glass:   { id: 'glass',   name: '유리병',   icon: '🍾', cls: 'bin-glass',   tip: '뚜껑을 빼고 유리병 통에!' },
+      carton:  { id: 'carton',  name: '종이팩',   icon: '🧃', cls: 'bin-carton',  tip: '우유갑은 종이와 따로 모아요!' },
+      vinyl:   { id: 'vinyl',   name: '비닐',     icon: SVG_VINYL_BAG, cls: 'bin-vinyl',   tip: '깨끗한 비닐은 비닐 통에!' }
+    };
+
+    const ITEM_DATABASE = [
+      // 플라스틱
+      { id: 'p1', name: '페트병',   bin: 'plastic', icon: '🧴' },
+      { id: 'p2', name: '요구르트병', bin: 'plastic', icon: '🥛' },
+      { id: 'p3', name: '세제 통',  bin: 'plastic', icon: '🧼' },
+      { id: 'p4', name: '샴푸 통',  bin: 'plastic', icon: '🧴' },
+      // 종이
+      { id: 'pa1', name: '신문지',   bin: 'paper', icon: '📰' },
+      { id: 'pa2', name: '공책',     bin: 'paper', icon: '📓' },
+      { id: 'pa3', name: '택배 상자', bin: 'paper', icon: '📦' },
+      { id: 'pa4', name: '종이 쇼핑백',bin: 'paper', icon: SVG_PAPER_BAG },
+      // 캔
+      { id: 'c1', name: '음료 캔',  bin: 'can', icon: '🥤' },
+      { id: 'c2', name: '참치 캔',  bin: 'can', icon: '🥫' },
+      { id: 'c3', name: '통조림 캔', bin: 'can', icon: '🥫' },
+      // 일반쓰레기 (2단계부터 등장)
+      { id: 't1', name: '휴지',     bin: 'trash', icon: '🧻' },
+      { id: 't2', name: '볼펜',     bin: 'trash', icon: '🖊️' },
+      { id: 't3', name: '칫솔',     bin: 'trash', icon: '🪥' },
+      { id: 't4', name: '고무장갑', bin: 'trash', icon: '🧤' },
+      // 유리병 (3단계 등장)
+      { id: 'g1', name: '음료 유리병', bin: 'glass', icon: '🍾' },
+      { id: 'g2', name: '잼 병',     bin: 'glass', icon: '🫙' },
+      { id: 'g3', name: '소스 병',   bin: 'glass', icon: '🍾' },
+      // 종이팩 (3단계 등장)
+      { id: 'ct1', name: '우유갑',   bin: 'carton', icon: '🥛' },
+      { id: 'ct2', name: '주스 팩',  bin: 'carton', icon: '🧃' },
+      { id: 'ct3', name: '두유 팩',  bin: 'carton', icon: '🧃' },
+      // 비닐 (3단계 등장)
+      { id: 'v1', name: '과자 봉지', bin: 'vinyl', icon: '🥨' },
+      { id: 'v2', name: '라면 봉지', bin: 'vinyl', icon: '🍜' },
+      { id: 'v3', name: '비닐봉지',  bin: 'vinyl', icon: SVG_VINYL_BAG },
+      { id: 'v4', name: '뽁뽁이',   bin: 'vinyl', icon: '🫧' }
+    ];
+
+    const ANIMAL_AVATARS = [
+      { id: 'dog',      name: '강아지', icon: '🐶' },
+      { id: 'cat',      name: '고양이', icon: '🐱' },
+      { id: 'rabbit',   name: '토끼',   icon: '🐰' },
+      { id: 'bear',     name: '곰',     icon: '🐻' },
+      { id: 'lion',     name: '사자',   icon: '🦁' },
+      { id: 'penguin',  name: '펭귄',   icon: '🐧' },
+      { id: 'fox',      name: '여우',   icon: '🦊' },
+      { id: 'panda',    name: '판다',   icon: '🐼' },
+      { id: 'monkey',   name: '원숭이', icon: '🐵' },
+      { id: 'elephant', name: '코끼리', icon: '🐘' },
+      { id: 'chick',    name: '병아리', icon: '🐥' },
+      { id: 'squirrel', name: '다람쥐', icon: '🐿️' }
+    ];
+
+    const FIXED_CLASSES = [
+      { id: 'c1', name: '햇살반' },
+      { id: 'c2', name: '나무반' },
+      { id: 'c3', name: '꽃잎반' },
+      { id: 'c4', name: '무지개반' }
+    ];
+
+    /**
+     * =====================================================================
+     * [2] Storage 추상화 모듈
+     * =====================================================================
+     */
+    /*
+     * 파이어베이스(Firestore) 저장소
+     * - firebase-config.js 에 설정값이 있으면 파이어스토어에 저장하고 실시간으로 받아 온다.
+     * - 설정값이 없거나 연결이 안 되면 아래 LocalStorage 방식으로 저장한다.
+     * - 저장하는 것: 반, 동물 별명 이모지, 단계, 나뭇잎 수, 틀린 물건(물건 id, 잘못 넣은 통), 날짜
+     *   (학생 실명·사진·연락처는 저장하지 않음)
+     */
+    const localDay = (d = new Date()) => d.toLocaleDateString('sv-SE'); // YYYY-MM-DD (기기 시간 기준)
+
+    const LocalEcoStorage = (() => {
+      const STORAGE_KEY = 'eco_guardian_data_v3';
+      const initialData = {
+        classes: FIXED_CLASSES,
+        records: []
+      };
+
+      function loadData() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) { saveData(initialData); return initialData; }
+          const parsed = JSON.parse(raw);
+          parsed.classes = FIXED_CLASSES;
+          return parsed;
+        } catch (e) {
+          return initialData;
+        }
+      }
+      function saveData(data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+
+      return {
+        async getClassList() { return [...loadData().classes]; },
+        async saveGameRecord(record) {
+          const data = loadData();
+          const newEntry = { id: 'rec_' + Date.now(), ...record, day: localDay(), timestamp: new Date().toISOString() };
+          data.records.push(newEntry);
+          saveData(data);
+          return newEntry;
+        },
+        async getClassLeavesSummary() {
+          const data = loadData();
+          const summary = {};
+          data.classes.forEach(c => {
+            summary[c.id] = { id: c.id, name: c.name, totalLeaves: 0, todayLeaves: 0 };
+          });
+          const todayStr = localDay();
+          data.records.forEach(rec => {
+            if (summary[rec.classId]) {
+              summary[rec.classId].totalLeaves += (rec.leaves || 0);
+              if ((rec.day || (rec.timestamp || '').slice(0, 10)) === todayStr) {
+                summary[rec.classId].todayLeaves += (rec.leaves || 0);
+              }
+            }
+          });
+          return Object.values(summary).sort((a, b) => b.totalLeaves - a.totalLeaves);
+        },
+        async getConfusedItemsStats() {
+          const data = loadData();
+          const itemStats = {};
+          data.records.forEach(rec => {
+            if (Array.isArray(rec.wrongItems)) {
+              rec.wrongItems.forEach(({ itemId, wrongBin }) => {
+                if (!itemStats[itemId]) itemStats[itemId] = { count: 0, wrongBins: {} };
+                itemStats[itemId].count++;
+                itemStats[itemId].wrongBins[wrongBin] = (itemStats[itemId].wrongBins[wrongBin] || 0) + 1;
+              });
+            }
+          });
+          return Object.entries(itemStats).map(([itemId, stat]) => {
+            const itemDef = ITEM_DATABASE.find(i => i.id === itemId) || { name: itemId, icon: '❓' };
+            let mostWrongBin = '-';
+            let maxBinCount = 0;
+            Object.entries(stat.wrongBins).forEach(([binKey, bCount]) => {
+              if (bCount > maxBinCount) {
+                maxBinCount = bCount;
+                mostWrongBin = BIN_INFO[binKey] ? BIN_INFO[binKey].name : binKey;
+              }
+            });
+            return { name: `${itemDef.icon} ${itemDef.name}`, count: stat.count, mostWrongBin };
+          }).sort((a, b) => b.count - a.count);
+        },
+        async resetAllData() { saveData(initialData); },
+        // 로컬 저장은 실시간 연동이 없으므로 한 번만 알려 준다.
+        subscribeLeaderboard(callback) {
+          this.getClassLeavesSummary().then(s => callback(s, { online: false }));
+          return () => {};
+        }
+      };
+    })();
+
+    // 기록 묶음(plays)으로 반별 요약과 오답 통계를 계산하는 공통 함수
+    function summarizePlays(plays) {
+      const summary = {};
+      FIXED_CLASSES.forEach(c => { summary[c.id] = { id: c.id, name: c.name, totalLeaves: 0, todayLeaves: 0 }; });
+      const todayStr = localDay();
+      plays.forEach(p => {
+        const s = summary[p.classId];
+        if (!s) return;
+        s.totalLeaves += (p.leaves || 0);
+        if (p.day === todayStr) s.todayLeaves += (p.leaves || 0);
+      });
+      return Object.values(summary).sort((a, b) => b.totalLeaves - a.totalLeaves);
+    }
+
+    function confusedStatsFromPlays(plays) {
+      const itemStats = {};
+      plays.forEach(rec => {
+        (rec.wrongItems || []).forEach(({ itemId, wrongBin }) => {
+          if (!itemStats[itemId]) itemStats[itemId] = { count: 0, wrongBins: {} };
+          itemStats[itemId].count++;
+          itemStats[itemId].wrongBins[wrongBin] = (itemStats[itemId].wrongBins[wrongBin] || 0) + 1;
+        });
+      });
+      return Object.entries(itemStats).map(([itemId, stat]) => {
+        const itemDef = ITEM_DATABASE.find(i => i.id === itemId) || { name: itemId, icon: '❓' };
+        let mostWrongBin = '-', maxBinCount = 0;
+        Object.entries(stat.wrongBins).forEach(([binKey, bCount]) => {
+          if (bCount > maxBinCount) { maxBinCount = bCount; mostWrongBin = BIN_INFO[binKey] ? BIN_INFO[binKey].name : binKey; }
+        });
+        return { name: `${itemDef.icon} ${itemDef.name}`, count: stat.count, mostWrongBin };
+      }).sort((a, b) => b.count - a.count);
+    }
+
+    const FirebaseEcoStorage = (() => {
+      // window.EcoFirebase 는 아래 type="module" 스크립트가 채운다.
+      const ready = async () => window.EcoFirebase || (await window.EcoFirebaseReady) || window.EcoFirebase;
+
+      // 교사가 '기록 초기화'를 누른 시각 이후의 기록만 센다(기록 자체는 지우지 않음).
+      function afterReset(plays, resetAt) {
+        if (!resetAt) return plays;
+        return plays.filter(p => !p.createdAt || p.createdAt.toMillis() > resetAt.toMillis());
+      }
+
+      async function fetchPlays() {
+        const fb = await ready();
+        const { getDocs, getDoc, collection, doc } = fb.api;
+        const [snap, meta] = await Promise.all([
+          getDocs(collection(fb.db, 'plays')),
+          getDoc(doc(fb.db, 'meta', 'settings'))
+        ]);
+        const resetAt = meta.exists() ? meta.data().resetAt : null;
+        return afterReset(snap.docs.map(d => d.data()), resetAt);
+      }
+
+      return {
+        async getClassList() { return [...FIXED_CLASSES]; },
+        async saveGameRecord(record) {
+          const fb = await ready();
+          const { addDoc, collection, serverTimestamp } = fb.api;
+          const entry = {
+            classId: record.classId,
+            avatar: record.avatar,
+            level: record.level,
+            leaves: record.leaves,
+            wrongItems: (record.wrongItems || []).slice(0, 10).map(w => ({ itemId: w.itemId, wrongBin: w.wrongBin })),
+            day: localDay(),
+            createdAt: serverTimestamp()
+          };
+          await addDoc(collection(fb.db, 'plays'), entry);
+          return entry;
+        },
+        async getClassLeavesSummary() { return summarizePlays(await fetchPlays()); },
+        async getConfusedItemsStats() { return confusedStatsFromPlays(await fetchPlays()); },
+        async resetAllData() {
+          const fb = await ready();
+          const { setDoc, doc, serverTimestamp } = fb.api;
+          await setDoc(doc(fb.db, 'meta', 'settings'), { resetAt: serverTimestamp() });
+        },
+        // 실시간 리더보드: 기록이 새로 들어올 때마다 callback(summary)을 다시 부른다.
+        subscribeLeaderboard(callback) {
+          let unsubPlays = () => {}, unsubMeta = () => {}, stopped = false;
+          let plays = [], resetAt = null;
+          const emit = () => callback(summarizePlays(afterReset(plays, resetAt)), { online: true });
+          ready().then(fb => {
+            if (stopped || !fb) return;
+            const { onSnapshot, collection, doc } = fb.api;
+            unsubMeta = onSnapshot(doc(fb.db, 'meta', 'settings'), s => { resetAt = s.exists() ? s.data().resetAt : null; emit(); });
+            unsubPlays = onSnapshot(collection(fb.db, 'plays'), s => { plays = s.docs.map(d => d.data()); emit(); },
+              err => { console.warn('[리더보드] 실시간 연결 오류', err); callback(null, { online: false, error: err }); });
+          });
+          return () => { stopped = true; unsubPlays(); unsubMeta(); };
+        }
+      };
+    })();
+
+    // 파이어베이스를 쓸 수 있으면 파이어베이스, 아니면 로컬 저장을 쓰는 창구
+    const EcoStorage = new Proxy({}, {
+      get(_, key) {
+        const pick = () => (window.EcoFirebase ? FirebaseEcoStorage : LocalEcoStorage);
+        if (key === 'subscribeLeaderboard') {
+          return (cb) => {
+            let unsub = () => {};
+            (window.EcoFirebaseReady || Promise.resolve(null)).then(() => { unsub = pick().subscribeLeaderboard(cb); });
+            return () => unsub();
+          };
+        }
+        return async (...args) => {
+          await (window.EcoFirebaseReady || Promise.resolve(null));
+          const store = pick();
+          try { return await store[key](...args); }
+          catch (e) {
+            console.warn('[저장소] 파이어베이스 오류, 이 기기에 임시 저장합니다.', e);
+            if (store !== LocalEcoStorage) return LocalEcoStorage[key](...args);
+            throw e;
+          }
+        };
+      }
+    });
+
+    /**
+     * =====================================================================
+     * [3] Web Audio 사운드 & TTS 음성
+     * =====================================================================
+     */
+    const SoundAudio = (() => {
+      let audioCtx = null;
+      let isMuted = false;
+
+      function getContext() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }
+
+      return {
+        toggleMute() {
+          isMuted = !isMuted;
+          if (isMuted && window.speechSynthesis) window.speechSynthesis.cancel();
+          return isMuted;
+        },
+        getMuted() { return isMuted; },
+
+        playCorrect() {
+          if (isMuted) return;
+          const ctx = getContext();
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+            gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + idx * 0.08 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.08 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + idx * 0.08);
+            osc.stop(ctx.currentTime + idx * 0.08 + 0.4);
+          });
+        },
+
+        playWrong() {
+          if (isMuted) return;
+          const ctx = getContext();
+          const notes = [349.23, 293.66];
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.14);
+            gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.14);
+            gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + idx * 0.14 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.14 + 0.3);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + idx * 0.14);
+            osc.stop(ctx.currentTime + idx * 0.14 + 0.35);
+          });
+        },
+
+        playLeaf() {
+          if (isMuted) return;
+          const ctx = getContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.22);
+        },
+
+        speak(text) {
+          if (isMuted || !('speechSynthesis' in window)) return;
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = 'ko-KR';
+          utter.rate = 0.95;
+          utter.pitch = 1.2;
+          window.speechSynthesis.speak(utter);
+        }
+      };
+    })();
+
+    /**
+     * =====================================================================
+     * [4] 메인 게임 제어 (드래그 앤 드롭 & 입체 통 렌더링)
+     * =====================================================================
+     */
+    const GameApp = (() => {
+      let selectedClass = null;
+      let selectedAvatar = null;
+      let selectedLevel = null;
+      let currentLevel = 1;
+
+      let roundQuestions = [];
+      let currentQIndex = 0;
+      let earnedLeaves = 0;
+      let roundMistakes = [];
+
+      let isDropLocked = false;
+      let lastDragEndTime = 0;
+
+      const LEVEL_BINS = {
+        1: ['plastic', 'paper', 'can'],
+        2: ['plastic', 'paper', 'can', 'trash'],
+        3: ['plastic', 'paper', 'can', 'trash', 'glass', 'carton', 'vinyl']
+      };
+      const LEVEL_POINTS = { 1: 1, 2: 2, 3: 3 };
+
+      let leaderboardUnsub = null;
+      function stopLeaderboardLive() {
+        if (leaderboardUnsub) { leaderboardUnsub(); leaderboardUnsub = null; }
+      }
+
+      function switchScreen(screenId) {
+        if (screenId !== 'screen-leaderboard') stopLeaderboardLive();
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(screenId);
+        if (target) target.classList.add('active');
+
+        // 첫 화면, 단계 선택 화면, 게임 화면, 교사 화면은 표준 헤더 숨김 (결과, 리더보드 화면만 표시)
+        const stdHeader = document.getElementById('standard-header');
+        if (stdHeader) {
+          if (screenId === 'screen-result' || screenId === 'screen-leaderboard') {
+            stdHeader.style.display = 'flex';
+          } else {
+            stdHeader.style.display = 'none';
+          }
+        }
+      }
+
+      return {
+        async init() {
+          // ?debug 모드 감지
+          if (window.location.search.includes('debug')) {
+            document.getElementById('game-canvas')?.classList.add('debug-mode');
+          }
+
+          switchScreen('screen-start');
+          // 주소 끝에 #leaderboard 를 붙이면 바로 리더보드가 열린다(교실 TV용)
+          if (location.hash === '#leaderboard') this.goToLeaderboard();
+          document.getElementById('open-leaderboard-btn')?.addEventListener('click', () => this.goToLeaderboard());
+          this.bindHeaderEvents();
+          this.bindTeacherGate();
+          this.bindStartHotspots();
+          this.bindLevelHotspots();
+          this.setupDragAndDrop();
+        },
+
+        bindHeaderEvents() {
+          const syncMuteButtons = () => {
+            const muted = SoundAudio.toggleMute();
+            const icon = muted ? '🔇' : '🔊';
+            document.querySelectorAll('.sound-toggle-btn').forEach(btn => {
+              btn.textContent = icon;
+            });
+          };
+
+          document.querySelectorAll('.sound-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', syncMuteButtons);
+          });
+
+          document.querySelectorAll('.home-nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.goToStart());
+          });
+        },
+
+        bindTeacherGate() {
+          const gateBtn = document.getElementById('teacher-gate-btn');
+          const progBar = document.getElementById('teacher-progress');
+          let timer = null;
+          let startTime = 0;
+
+          function startPress(e) {
+            e.preventDefault();
+            startTime = Date.now();
+            progBar.style.width = '0%';
+            timer = setInterval(() => {
+              const elapsed = Date.now() - startTime;
+              const percent = Math.min(100, (elapsed / 3000) * 100);
+              progBar.style.width = percent + '%';
+              if (elapsed >= 3000) {
+                clearInterval(timer);
+                progBar.style.width = '0%';
+                GameApp.goToTeacher();
+              }
+            }, 50);
+          }
+          function endPress() {
+            if (timer) clearInterval(timer);
+            progBar.style.width = '0%';
+          }
+          gateBtn.addEventListener('pointerdown', startPress);
+          gateBtn.addEventListener('pointerup', endPress);
+          gateBtn.addEventListener('pointerleave', endPress);
+          gateBtn.addEventListener('pointercancel', endPress);
+        },
+
+        bindStartHotspots() {
+          // 4개 반 누름 칸 바인딩
+          document.querySelectorAll('.class-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const classId = btn.dataset.classId;
+              selectedClass = FIXED_CLASSES.find(c => c.id === classId) || { id: classId, name: btn.dataset.label };
+              document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('selected'));
+              btn.classList.add('selected');
+              this.updateHeaderPlayerInfo();
+            });
+          });
+
+          // 12개 동물 누름 칸 바인딩
+          document.querySelectorAll('.animal-btn-hs').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const animalId = btn.dataset.animalId;
+              selectedAvatar = ANIMAL_AVATARS.find(a => a.id === animalId) || { id: animalId, name: btn.dataset.label, icon: '🐾' };
+              document.querySelectorAll('.animal-btn-hs').forEach(b => b.classList.remove('selected'));
+              btn.classList.add('selected');
+              this.updateHeaderPlayerInfo();
+            });
+          });
+
+          // 시작하기 누름 칸
+          document.getElementById('start-game-btn').addEventListener('click', () => {
+            if (!selectedClass) {
+              SoundAudio.speak("반을 골라요!");
+              return;
+            }
+            if (!selectedAvatar) {
+              SoundAudio.speak("동물을 골라요!");
+              return;
+            }
+            this.goToLevelSelect();
+          });
+        },
+
+        bindLevelHotspots() {
+          // 3개 단계 카드 누름 칸
+          document.querySelectorAll('.level-card-btn').forEach(card => {
+            card.addEventListener('click', () => {
+              const lvl = parseInt(card.dataset.level, 10);
+              selectedLevel = lvl;
+              document.querySelectorAll('.level-card-btn').forEach(c => c.classList.remove('selected'));
+              card.classList.add('selected');
+              if (lvl === 1) {
+                SoundAudio.speak("1단계! 통 3개로 놀아요");
+              } else if (lvl === 2) {
+                SoundAudio.speak("2단계! 통 4개로 놀아요");
+              } else if (lvl === 3) {
+                SoundAudio.speak("3단계! 통 7개로 놀아요");
+              }
+            });
+          });
+
+          // 뒤로 누름 칸
+          document.getElementById('btn-back-to-start').addEventListener('click', () => {
+            this.goToStart();
+          });
+
+          // 놀이 시작 누름 칸
+          document.getElementById('btn-start-stage-game').addEventListener('click', () => {
+            if (!selectedLevel) {
+              SoundAudio.speak("단계를 골라요!");
+              return;
+            }
+            this.selectLevel(selectedLevel);
+          });
+        },
+
+        updateHeaderPlayerInfo() {
+          const avatarStd = document.getElementById('current-player-avatar');
+          const labelStd = document.getElementById('current-player-label');
+          const avatarGame = document.getElementById('game-player-avatar');
+          const labelGame = document.getElementById('game-player-label');
+
+          if (selectedClass && selectedAvatar) {
+            const text = `${selectedClass.name} ${selectedAvatar.name}`;
+            avatarStd.textContent = selectedAvatar.icon;
+            labelStd.textContent = text;
+            avatarGame.textContent = selectedAvatar.icon;
+            labelGame.textContent = text;
+          }
+        },
+
+        goToLevelSelect() {
+          selectedLevel = null;
+          document.querySelectorAll('.level-card-btn').forEach(c => c.classList.remove('selected'));
+          switchScreen('screen-level');
+        },
+
+        goToStart() {
+          // 첫 화면으로 돌아가며 기존 선택 유지 표시
+          switchScreen('screen-start');
+          if (selectedClass) {
+            document.querySelectorAll('.class-btn').forEach(b => {
+              b.classList.toggle('selected', b.dataset.classId === selectedClass.id);
+            });
+          }
+          if (selectedAvatar) {
+            document.querySelectorAll('.animal-btn-hs').forEach(b => {
+              b.classList.toggle('selected', b.dataset.animalId === selectedAvatar.id);
+            });
+          }
+        },
+
+        goToTeacher() {
+          TeacherView.init();
+          switchScreen('screen-teacher');
+        },
+
+        selectLevel(level) {
+          currentLevel = level;
+          earnedLeaves = 0;
+          roundMistakes = [];
+          currentQIndex = 0;
+          isDropLocked = false;
+
+          const activeBins = LEVEL_BINS[level];
+          const availableItems = ITEM_DATABASE.filter(item => activeBins.includes(item.bin));
+          const shuffled = [...availableItems].sort(() => Math.random() - 0.5);
+
+          roundQuestions = [];
+          for (let i = 0; i < 10; i++) {
+            roundQuestions.push(shuffled[i % shuffled.length]);
+          }
+
+          this.renderBinsForLevel(activeBins);
+          switchScreen('screen-game');
+          this.loadCurrentQuestion();
+        },
+
+        // 열린 뚜껑 입체 분리수거통 렌더링 (웃는 얼굴 포함)
+        renderBinsForLevel(binIds) {
+          const container = document.getElementById('bins-container');
+          container.innerHTML = '';
+          container.className = `bins-container count-${binIds.length}`;
+
+          binIds.forEach(binKey => {
+            const def = BIN_INFO[binKey];
+            const binDiv = document.createElement('div');
+            binDiv.className = `recycle-bin ${def.cls}`;
+            binDiv.dataset.bin = def.id;
+            binDiv.innerHTML = `
+              <div class="bin-open-rim">
+                <div class="bin-open-hole"></div>
+              </div>
+              <div class="bin-cute-face">
+                <svg viewBox="0 0 168 72" width="168" height="72">
+                  <ellipse cx="26" cy="42" rx="14" ry="8" fill="#fb7185" opacity="0.85"/>
+                  <ellipse cx="142" cy="42" rx="14" ry="8" fill="#fb7185" opacity="0.85"/>
+                  <ellipse cx="48" cy="26" rx="11" ry="14" fill="#1e293b"/>
+                  <circle cx="45" cy="22" r="4.2" fill="#ffffff"/>
+                  <circle cx="52" cy="30" r="2" fill="#ffffff"/>
+                  <ellipse cx="120" cy="26" rx="11" ry="14" fill="#1e293b"/>
+                  <circle cx="117" cy="22" r="4.2" fill="#ffffff"/>
+                  <circle cx="124" cy="30" r="2" fill="#ffffff"/>
+                  <path d="M 60,34 Q 84,60 108,34" stroke="#1e293b" stroke-width="7" stroke-linecap="round" fill="none"/>
+                </svg>
+              </div>
+              <div class="bin-icon">${def.icon}</div>
+              <div class="bin-name">${def.name}</div>
+            `;
+            // 손가락으로 통을 직접 탭해서 넣기 지원
+            binDiv.addEventListener('pointerup', () => {
+              if (isDropLocked) return;
+              if (Date.now() - lastDragEndTime < 250) return;
+              this.triggerDropIntoBin(binDiv, def.id);
+            });
+            container.appendChild(binDiv);
+          });
+        },
+
+        loadCurrentQuestion() {
+          isDropLocked = false;
+          const item = roundQuestions[currentQIndex];
+          const itemElem = document.getElementById('active-item');
+          const iconElem = document.getElementById('active-item-icon');
+          const nameElem = document.getElementById('active-item-name');
+          const progressText = document.getElementById('game-progress-text');
+          const leafCountText = document.getElementById('game-leaf-count');
+          const feedbackText = document.getElementById('game-feedback-text');
+
+          iconElem.innerHTML = item.icon;
+          nameElem.textContent = item.name;
+          progressText.textContent = `문제 ${currentQIndex + 1} / 10`;
+          leafCountText.textContent = earnedLeaves;
+          feedbackText.textContent = '물건을 손으로 끌어서 알맞은 통에 쏙 넣어 보세요!';
+
+          itemElem.classList.remove('suck-in', 'dragging');
+          itemElem.style.transform = 'translate(0px, 0px)';
+          itemElem.style.opacity = '1';
+
+          document.querySelectorAll('.recycle-bin').forEach(b => {
+            b.classList.remove('drag-over', 'highlight-correct');
+          });
+        },
+
+        // 통 입구로 쏙 흡입되는 애니메이션
+        triggerDropIntoBin(binElement, targetBinId) {
+          if (isDropLocked) return;
+          isDropLocked = true;
+
+          const itemElem = document.getElementById('active-item');
+          itemElem.classList.remove('dragging');
+
+          const itemRect = itemElem.getBoundingClientRect();
+          const binRect = binElement.getBoundingClientRect();
+
+          // 통 윗부분 투입구 위치로 정확하게 이동
+          const deltaX = (binRect.left + binRect.width / 2 - (itemRect.left + itemRect.width / 2)) / globalScale;
+          const deltaY = (binRect.top + binRect.height * 0.18 - (itemRect.top + itemRect.height / 2)) / globalScale;
+
+          itemElem.classList.add('suck-in');
+          itemElem.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.12)`;
+          itemElem.style.opacity = '0';
+
+          setTimeout(() => {
+            this.handleItemDrop(targetBinId);
+          }, 350);
+        },
+
+        handleItemDrop(targetBinId) {
+          const currentItem = roundQuestions[currentQIndex];
+          const isCorrect = (currentItem.bin === targetBinId);
+          const feedbackText = document.getElementById('game-feedback-text');
+          const correctBinDef = BIN_INFO[currentItem.bin];
+
+          if (isCorrect) {
+            SoundAudio.playCorrect();
+            const reward = LEVEL_POINTS[currentLevel];
+            earnedLeaves += reward;
+            document.getElementById('game-leaf-count').textContent = earnedLeaves;
+            feedbackText.textContent = `딩동댕! 참 잘했어요! (+${reward} 나뭇잎 🍃)`;
+
+            this.spawnLeafParticles();
+            setTimeout(() => this.advanceQuestion(), 850);
+          } else {
+            SoundAudio.playWrong();
+            roundMistakes.push({ itemId: currentItem.id, wrongBin: targetBinId });
+
+            const correctBinEl = document.querySelector(`.recycle-bin[data-bin="${currentItem.bin}"]`);
+            if (correctBinEl) correctBinEl.classList.add('highlight-correct');
+
+            feedbackText.textContent = correctBinDef.tip;
+            SoundAudio.speak(correctBinDef.tip);
+
+            setTimeout(() => {
+              if (correctBinEl) correctBinEl.classList.remove('highlight-correct');
+              this.loadCurrentQuestion();
+            }, 2300);
+          }
+        },
+
+        advanceQuestion() {
+          currentQIndex++;
+          if (currentQIndex >= 10) {
+            this.finishGame();
+          } else {
+            this.loadCurrentQuestion();
+          }
+        },
+
+        spawnLeafParticles() {
+          SoundAudio.playLeaf();
+          const itemRect = document.getElementById('active-item').getBoundingClientRect();
+          for (let i = 0; i < 6; i++) {
+            const leaf = document.createElement('div');
+            leaf.className = 'leaf-particle';
+            leaf.textContent = '🍃';
+            leaf.style.left = (itemRect.left + itemRect.width / 2) + 'px';
+            leaf.style.top = (itemRect.top + itemRect.height / 2) + 'px';
+
+            const tx = (Math.random() - 0.5) * 360 + 'px';
+            const ty = (-150 - Math.random() * 160) + 'px';
+            leaf.style.setProperty('--tx', tx);
+            leaf.style.setProperty('--ty', ty);
+
+            document.body.appendChild(leaf);
+            setTimeout(() => leaf.remove(), 850);
+          }
+        },
+
+        async finishGame() {
+          await EcoStorage.saveGameRecord({
+            classId: selectedClass.id,
+            avatar: selectedAvatar.icon,
+            level: currentLevel,
+            leaves: earnedLeaves,
+            wrongItems: roundMistakes
+          });
+
+          document.getElementById('result-leaf-val').textContent = earnedLeaves;
+          const reviewBox = document.getElementById('wrong-review-grid');
+          reviewBox.innerHTML = '';
+
+          if (roundMistakes.length === 0) {
+            reviewBox.innerHTML = `<div style="color: #15803d; font-size:1.8rem; font-weight:900;">한 번도 틀리지 않았어요! 완벽한 지구 지킴이예요 🌟</div>`;
+          } else {
+            const seen = new Set();
+            roundMistakes.forEach(m => {
+              if (!seen.has(m.itemId)) {
+                seen.add(m.itemId);
+                const item = ITEM_DATABASE.find(i => i.id === m.itemId);
+                const correctBin = BIN_INFO[item.bin];
+                const div = document.createElement('div');
+                div.className = 'review-item';
+                div.innerHTML = `<span>${item.icon} ${item.name}</span><span style="color:#64748b;">➔</span><span style="color:#15803d;">[${correctBin.name}]</span>`;
+                reviewBox.appendChild(div);
+              }
+            });
+          }
+          switchScreen('screen-result');
+        },
+
+        goToLeaderboard() {
+          switchScreen('screen-leaderboard');
+          stopLeaderboardLive();
+          const status = document.getElementById('leaderboard-live');
+          if (status) status.textContent = '⏳ 불러오는 중...';
+          leaderboardUnsub = EcoStorage.subscribeLeaderboard((summary, info) => {
+            if (status) {
+              status.textContent = info && info.online ? '🟢 실시간 연결됨' : '⚪ 이 기기 기록만 보여요';
+              status.classList.toggle('online', !!(info && info.online));
+            }
+            if (summary) this.renderLeaderboard(summary);
+          });
+        },
+
+        renderLeaderboard(summary) {
+          const listContainer = document.getElementById('ranking-list-container');
+          listContainer.innerHTML = '';
+
+          const championBadge = document.getElementById('leaderboard-champion');
+          const earthGraphic = document.getElementById('earth-graphic');
+          const earthDesc = document.getElementById('earth-desc');
+
+          const todaySorted = [...summary].sort((a, b) => b.todayLeaves - a.todayLeaves);
+          if (todaySorted.length > 0 && todaySorted[0].todayLeaves > 0) {
+            championBadge.textContent = `👑 오늘의 지구 지킴이 반: ${todaySorted[0].name} (${todaySorted[0].todayLeaves}장!)`;
+          } else {
+            championBadge.textContent = `🌱 오늘의 첫 지구 지킴이가 되어보세요!`;
+          }
+
+          const topLeaves = summary.length > 0 ? summary[0].totalLeaves : 0;
+          const grayscaleVal = Math.max(0, 100 - (topLeaves * 2.5));
+          earthGraphic.style.filter = `grayscale(${grayscaleVal}%) drop-shadow(0 0 ${topLeaves > 15 ? 16 : 2}px #86efac)`;
+
+          if (topLeaves >= 40) {
+            earthDesc.textContent = '🌟 지구가 완전히 건강한 초록빛을 되찾았어요! 대단해요!';
+          } else {
+            earthDesc.textContent = `지구가 초록색이 되기까지 나뭇잎이 더 필요해요! (현재 1위: ${topLeaves}장)`;
+          }
+
+          summary.forEach((item, idx) => {
+            const row = document.createElement('div');
+            row.className = 'rank-row';
+            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}등`;
+            row.innerHTML = `<div><span>${medal}</span> <strong>${item.name}</strong></div><div style="color: #15803d;">🍃 총 ${item.totalLeaves}장</div>`;
+            listContainer.appendChild(row);
+          });
+        },
+
+
+        // 터치/마우스 고정밀 드래그 앤 드롭
+        setupDragAndDrop() {
+          const item = document.getElementById('active-item');
+          let isDragging = false;
+          let hasMoved = false;
+          let startPointerX = 0, startPointerY = 0;
+          let currentDeltaX = 0, currentDeltaY = 0;
+
+          const onPointerDown = (e) => {
+            if (isDropLocked) return;
+            isDragging = true;
+            hasMoved = false;
+            startPointerX = e.clientX;
+            startPointerY = e.clientY;
+            currentDeltaX = 0;
+            currentDeltaY = 0;
+
+            item.setPointerCapture(e.pointerId);
+          };
+
+          const onPointerMove = (e) => {
+            if (!isDragging || isDropLocked) return;
+
+            const dist = Math.hypot(e.clientX - startPointerX, e.clientY - startPointerY);
+            if (dist > 8) {
+              hasMoved = true;
+              item.classList.add('dragging');
+            }
+
+            if (hasMoved) {
+              currentDeltaX = (e.clientX - startPointerX) / globalScale;
+              currentDeltaY = (e.clientY - startPointerY) / globalScale;
+              item.style.transform = `translate(${currentDeltaX}px, ${currentDeltaY}px) scale(1.15)`;
+
+              const bins = document.querySelectorAll('.recycle-bin');
+              bins.forEach(bin => {
+                const rect = bin.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                  bin.classList.add('drag-over');
+                } else {
+                  bin.classList.remove('drag-over');
+                }
+              });
+            }
+          };
+
+          const onPointerUp = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            lastDragEndTime = Date.now();
+            item.releasePointerCapture(e.pointerId);
+
+            if (!hasMoved) {
+              item.classList.remove('dragging');
+              item.style.transform = 'translate(0px, 0px)';
+              return;
+            }
+
+            let droppedBinEl = null;
+            document.querySelectorAll('.recycle-bin').forEach(bin => {
+              bin.classList.remove('drag-over');
+              const rect = bin.getBoundingClientRect();
+              if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                droppedBinEl = bin;
+              }
+            });
+
+            if (droppedBinEl) {
+              this.triggerDropIntoBin(droppedBinEl, droppedBinEl.dataset.bin);
+            } else {
+              item.classList.remove('dragging');
+              item.style.transform = 'translate(0px, 0px)';
+            }
+          };
+
+          item.addEventListener('pointerdown', onPointerDown);
+          item.addEventListener('pointermove', onPointerMove);
+          item.addEventListener('pointerup', onPointerUp);
+          item.addEventListener('pointercancel', onPointerUp);
+        }
+      };
+    })();
+
+    /**
+     * =====================================================================
+     * [5] 교사 관리자 설정 화면
+     * =====================================================================
+     */
+    const TeacherView = {
+      async init() {
+        await this.renderStats();
+      },
+      async renderStats() {
+        const stats = await EcoStorage.getConfusedItemsStats();
+        const tbody = document.getElementById('teacher-stats-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (stats.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" style="color:#94a3b8; padding:20px;">아직 기록된 오답 통계가 없습니다.</td></tr>';
+          return;
+        }
+        stats.forEach(s => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><strong>${s.name}</strong></td><td style="color:#dc2626; font-weight:900;">${s.count}회</td><td style="color:#b45309; font-weight:800;">${s.mostWrongBin}</td>`;
+          tbody.appendChild(tr);
+        });
+      },
+      async resetData() {
+        if (confirm('정말로 모든 반 점수와 플레이 기록을 지우시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+          await EcoStorage.resetAllData();
+          alert('모든 데이터가 초기화되었습니다.');
+          await this.renderStats();
+        }
+      }
+    };
+
+    function startApp() {
+      adjustCanvasScale();
+      GameApp.init();
+      setTimeout(adjustCanvasScale, 50);
+      setTimeout(adjustCanvasScale, 200);
+    }
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', startApp);
+    } else {
+      startApp();
+    }
+  </script>
+</body>
+</html>

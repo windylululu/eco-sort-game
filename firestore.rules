@@ -1,0 +1,37 @@
+rules_version = '2';
+// 분리배출 지구 지킴이 — 파이어스토어 보안 규칙
+// - plays: 누구나 읽고 새 기록을 더할 수 있지만, 고치거나 지울 수는 없다.
+// - meta/settings: '기록 초기화' 시각(resetAt)만 적을 수 있다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /plays/{playId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(
+                         ['classId', 'avatar', 'level', 'leaves', 'wrongItems', 'day', 'createdAt'])
+                    && request.resource.data.classId in ['c1', 'c2', 'c3', 'c4']
+                    && request.resource.data.avatar is string
+                    && request.resource.data.avatar.size() <= 8
+                    && request.resource.data.level in [1, 2, 3]
+                    && request.resource.data.leaves is int
+                    && request.resource.data.leaves >= 0
+                    && request.resource.data.leaves <= 30
+                    && request.resource.data.wrongItems is list
+                    && request.resource.data.wrongItems.size() <= 10
+                    && request.resource.data.day is string
+                    && request.resource.data.day.size() == 10
+                    && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /meta/settings {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['resetAt'])
+                   && request.resource.data.resetAt == request.time;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
