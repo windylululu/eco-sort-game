@@ -1167,6 +1167,15 @@
       <path d="M 40 40 C 38 46 38 54 39 60" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
     </svg>`;
 
+    // 작은 플라스틱 요구르트병(허리가 잘록한 병 + 은박 뚜껑)
+    const SVG_YOGURT_BOTTLE = `<svg viewBox="0 0 100 100" class="svg-icon yogurt-bottle-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="14" rx="19" ry="6" fill="#e5e7eb" stroke="#9ca3af" stroke-width="3"/>
+      <path d="M 31 14 L 69 14 L 69 24 C 69 32 72 36 72 44 C 72 50 64 54 64 60 C 64 66 72 70 72 78 L 72 86 C 72 91 67 94 62 94 L 38 94 C 33 94 28 91 28 86 L 28 78 C 28 70 36 66 36 60 C 36 54 28 50 28 44 C 28 36 31 32 31 24 Z" fill="#fff7ed" stroke="#ea580c" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="31" y="70" width="38" height="16" rx="3" fill="#fb923c"/>
+      <circle cx="50" cy="78" r="5" fill="#ffffff"/>
+      <path d="M 36 30 C 34 36 34 42 36 48" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/>
+    </svg>`;
+
     // 작은 소스 유리병(빨간 소스)
     const SVG_SAUCE_BOTTLE = `<svg viewBox="0 0 100 100" class="svg-icon sauce-bottle-svg" style="display:inline-block; vertical-align:middle; width:1em; height:1em;" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="38" y="10" width="24" height="12" rx="3" fill="#16a34a" stroke="#166534" stroke-width="3"/>
@@ -1189,7 +1198,7 @@
     const ITEM_DATABASE = [
       // 플라스틱
       { id: 'p1', name: '페트병',   bin: 'plastic', icon: '🧴' },
-      { id: 'p2', name: '요구르트병', bin: 'plastic', icon: '🥛' },
+      { id: 'p2', name: '요구르트병', bin: 'plastic', icon: SVG_YOGURT_BOTTLE },
       { id: 'p3', name: '세제 통',  bin: 'plastic', icon: '🧼' },
       { id: 'p4', name: '샴푸 통',  bin: 'plastic', icon: '🧴' },
       // 종이
